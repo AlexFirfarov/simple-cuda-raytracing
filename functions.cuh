@@ -28,20 +28,22 @@ __host__ __device__
 float_3 uchar4_to_float3(const uchar_4& val);
 
 __global__
-void gpu_ssaa(float_3 *render_image, uchar_4 *result_image, int width, int height, int sqrt_ray_per_pixel);
+void gpu_ssaa(float_3* render_image, uchar_4* result_image, int width, int height, int sqrt_ray_per_pixel);
 
-void cpu_ssaa(float_3 *render_image, uchar_4 *result_image, int width, int height, int sqrt_ray_per_pixel);
+void cpu_ssaa(float_3* render_image, uchar_4* result_image, int width, int height, int sqrt_ray_per_pixel);
 
 __host__ __device__
-float_3 get_color(const Ray& ray, const float_3& dir_to_light,
+float_3 get_color(const Ray& ray, 
+                  const float_3& dir_to_light,
                   const Light& light,
                   const Triangle& triangle,
                   const float_3& trig_normal,
-                  float_3 *floor,
-                  int floor_width, int floor_height);
+                  float_3* floor,
+                  int floor_width, 
+                  int floor_height);
 
 __host__ __device__
-float_3 floor_color(const Triangle& triangle, const Ray& ray, float_3 *floor, int floor_width, int floor_height);
+float_3 floor_color(const Triangle& triangle, const Ray& ray, float_3* floor, int floor_width, int floor_height);
 
 __host__ __device__
 float dist(const float_3& lhs, const float_3& rhs);
@@ -53,46 +55,56 @@ __host__ __device__
 float_3 normal(const Triangle& triangle);
 
 __host__ __device__
-void find_triangle_intersection(Triangle *trigs, int trigs_num, const Ray& ray, Intersection& result, int cur_trig_id);
+void find_triangle_intersection(Triangle* trigs, int trigs_num, const Ray& ray, Intersection& result, int cur_trig_id = -1);
 
 __host__ __device__
 float triangle_intersection(const Ray& ray, const Triangle& triangle);
 
 __global__
-void kernel_scan(int *data, int *shift, int n);
+void kernel_scan(int* data, int* shift, int n);
 
 __global__
-void kernel_shift(int *data, int *shift, int n);
+void kernel_shift(int* data, int* shift, int n);
 
-void scan(int *dev_data, int n);
-
-__global__
-void calc_bin(Ray *rays, int rays_num, int *bin, float min_power);
+void scan(int* dev_data, int n);
 
 __global__
-void sort_rays(Ray *rays, Ray *rays_copy, int rays_num, int num_of_zeros, int *bin, int *scan_data);
+void calc_bin(Ray* rays, int rays_num, int* bin, float min_power);
+
+__global__
+void sort_rays(Ray* rays, Ray* rays_copy, int rays_num, int num_of_zeros, int* bin, int* scan_data);
 
 __host__ __device__
-void ray_trace(Ray *render_rays, int rays_num,
-               Triangle *trigs, int trigs_num,
-               Light *lights, int lights_num,
-               Diod *diods, int diods_num,
-               float_3 *floor,
-               float_3 *render_image,
-               int scaled_width, int scaled_height,
-               int floor_width, int floor_height,
-               int start, int step);
+void ray_trace(Ray* render_rays, int rays_num,
+               Triangle* trigs, int trigs_num,
+               Light* lights, int lights_num,
+               Diod* diods, int diods_num,
+               float_3* floor,
+               float_3* render_image,
+               int scaled_width, 
+               int scaled_height,
+               int floor_width, 
+               int floor_height,
+               int start, 
+               int step);
 
 __global__
-void start_gpu_ray_trace(Ray *render_rays, int rays_num,
-                         Triangle *trigs, int trigs_num,
-                         Light *lights, int lights_num,
-                         Diod *diods, int diods_num,
-                         float_3 *floor,
-                         float_3 *render_image,
-                         int scaled_width, int scaled_height,
-                         int floor_width, int floor_height);
+void start_gpu_ray_trace(Ray* render_rays, 
+                         int rays_num,
+                         Triangle* trigs, 
+                         int trigs_num,
+                         Light* lights, 
+                         int lights_num,
+                         Diod* diods, 
+                         int diods_num,
+                         float_3* floor,
+                         float_3* render_image,
+                         int scaled_width, 
+                         int scaled_height,
+                         int floor_width, 
+                         int floor_height);
 
+                         
 __host__ __device__
 float_3 to_color_range(const float_3& pixel) {
     return float_3(min(pixel.x, 1.0f), min(pixel.y, 1.0f), min(pixel.z, 1.0f));
@@ -102,9 +114,9 @@ __host__ __device__
 uchar_4 float3_to_uchar4(const float_3& val) {
     uchar_4 result;
 
-    result.x = round(255.0 * val.x);
-    result.y = round(255.0 * val.y);
-    result.z = round(255.0 * val.z);
+    result.x = round(255.0f * val.x);
+    result.y = round(255.0f * val.y);
+    result.z = round(255.0f * val.z);
     result.w = 0;
 
     return result;
@@ -122,7 +134,7 @@ float_3 uchar4_to_float3(const uchar_4& val) {
 }
 
 __global__
-void gpu_ssaa(float_3 *render_image, uchar_4 *result_image, int width, int height, int sqrt_ray_per_pixel) {
+void gpu_ssaa(float_3* render_image, uchar_4* result_image, int width, int height, int sqrt_ray_per_pixel) {
     int sc_width = width * sqrt_ray_per_pixel;
 
     int id_x = blockDim.x * blockIdx.x + threadIdx.x;
@@ -144,7 +156,7 @@ void gpu_ssaa(float_3 *render_image, uchar_4 *result_image, int width, int heigh
     }
 }
 
-void cpu_ssaa(float_3 *render_image, uchar_4 *result_image, int width, int height, int sqrt_ray_per_pixel) {
+void cpu_ssaa(float_3* render_image, uchar_4* result_image, int width, int height, int sqrt_ray_per_pixel) {
     int sc_width = width * sqrt_ray_per_pixel;
 
     for (int x = 0; x < width; ++x) {
@@ -162,12 +174,14 @@ void cpu_ssaa(float_3 *render_image, uchar_4 *result_image, int width, int heigh
 }
 
 __host__ __device__
-float_3 get_color(const Ray& ray, const float_3& dir_to_light,
-                  const Light& light,
-                  const Triangle& triangle,
-                  const float_3& trig_normal,
-                  float_3 *floor,
-                  int floor_width, int floor_height) {
+float_3 get_color(const Ray& ray, 
+                 const float_3& dir_to_light,
+                 const Light& light,
+                 const Triangle& triangle,
+                 const float_3& trig_normal,
+                 float_3* floor,
+                 int floor_width, 
+                 int floor_height) {
 
     float diffuse_component = triangle.material.diffussion * (dot(trig_normal, dir_to_light));
 
@@ -181,11 +195,11 @@ float_3 get_color(const Ray& ray, const float_3& dir_to_light,
         color *= floor_color(triangle, ray, floor, floor_width, floor_height);
     }
 
-    return color * light.power * (diffuse_component + specular_component) + float_3(0.01f, 0.01f, 0.01f) * triangle.material.diffussion;
+    return color * light.power * (diffuse_component + specular_component);
 }
 
 __host__ __device__
-float_3 floor_color(const Triangle& triangle, const Ray& ray, float_3 *floor, int floor_width, int floor_height) {
+float_3 floor_color(const Triangle& triangle, const Ray& ray, float_3* floor, int floor_width, int floor_height) {
     float_3 e1 = triangle.b - triangle.a;
     float_3 e2 = triangle.c - triangle.a;
 
@@ -222,7 +236,7 @@ float_3 normal(const Triangle& triangle) {
 }
 
 __host__ __device__
-void find_triangle_intersection(Triangle *trigs, int trigs_num, const Ray& ray, Intersection& result, int cur_trig_id = -1) {
+void find_triangle_intersection(Triangle* trigs, int trigs_num, const Ray& ray, Intersection& result, int cur_trig_id) {
     float ts;
     result.distance = -1.0f;
     result.trig_id = -1;
@@ -258,15 +272,22 @@ float triangle_intersection(const Ray& ray, const Triangle& triangle) {
 }
 
 __host__ __device__
-void ray_trace(Ray *render_rays, int rays_num,
-               Triangle *trigs, int trigs_num,
-               Light *lights, int lights_num,
-               Diod *diods, int diods_num,
-               float_3 *floor,
-               float_3 *render_image,
-               int scaled_width, int scaled_height,
-               int floor_width, int floor_height,
-               int start=0, int step=1) {
+void ray_trace(Ray* render_rays, 
+               int rays_num,
+               Triangle* trigs, 
+               int trigs_num,
+               Light* lights, 
+               int lights_num,
+               Diod* diods, 
+               int diods_num,
+               float_3* floor,
+               float_3* render_image,
+               int scaled_width, 
+               int scaled_height,
+               int floor_width, 
+               int floor_height,
+               int start, 
+               int step) {
 
     for (int ray_id = start; ray_id < rays_num; ray_id += step) {
         Intersection intersection_info, ray_to_light_intersection;
@@ -314,10 +335,10 @@ void ray_trace(Ray *render_rays, int rays_num,
                     continue;
 
                 result_color += get_color(cur_ray,
-                                          dir_to_light, lights[light_id],
-                                          cur_trig, trig_normal,
-                                          floor,
-                                          floor_width, floor_height);
+                    dir_to_light, lights[light_id],
+                    cur_trig, trig_normal,
+                    floor,
+                    floor_width, floor_height);
             }
         }
 
@@ -337,31 +358,37 @@ void ray_trace(Ray *render_rays, int rays_num,
 }
 
 __global__
-void start_gpu_ray_trace(Ray *render_rays, int rays_num,
-                         Triangle *trigs, int trigs_num,
-                         Light *lights, int lights_num,
-                         Diod *diods, int diods_num,
-                         float_3 *floor,
-                         float_3 *render_image,
-                         int scaled_width, int scaled_height,
-                         int floor_width, int floor_height) {
+void start_gpu_ray_trace(Ray* render_rays, 
+                         int rays_num,
+                         Triangle* trigs, 
+                         int trigs_num,
+                         Light* lights, 
+                         int lights_num,
+                         Diod* diods, 
+                         int diods_num,
+                         float_3* floor,
+                         float_3* render_image,
+                         int scaled_width, 
+                         int scaled_height,
+                         int floor_width, 
+                         int floor_height) {
 
     int id_x = blockDim.x * blockIdx.x + threadIdx.x;
     int offset_x = blockDim.x * gridDim.x;
 
-    ray_trace(render_rays, rays_num,
+    ray_trace(render_rays, 
+              rays_num,
               trigs, trigs_num,
               lights, lights_num,
               diods, diods_num,
-              floor,
-              render_image,
+              floor, render_image,
               scaled_width, scaled_height,
               floor_width, floor_height,
               id_x, offset_x);
 }
 
 __global__
-void kernel_scan(int *data, int *shift, int n) {
+void kernel_scan(int* data, int* shift, int n) {
     __shared__ int s_data[BLOCK_SIZE + 8];
     int idx = threadIdx.x;
     int global_offset = (gridDim.x * blockIdx.y + blockIdx.x) * BLOCK_SIZE;
@@ -400,7 +427,7 @@ void kernel_scan(int *data, int *shift, int n) {
 }
 
 __global__
-void kernel_shift(int *data, int *shift, int n) {
+void kernel_shift(int* data, int* shift, int n) {
     int idx = threadIdx.x;
     int offset = gridDim.x * blockIdx.y + blockIdx.x;
     int diff = shift[offset];
@@ -411,27 +438,27 @@ void kernel_shift(int *data, int *shift, int n) {
         data[offset + idx + BLOCK_SIZE / 2] += diff;
 }
 
-void scan(int *dev_data, int n) {
+void scan(int* dev_data, int n) {
     int num_of_blocks = (n - 1) / BLOCK_SIZE + 1;
     dim3 blocks(std::min(num_of_blocks, MAX_BLOCKS), (num_of_blocks - 1) / MAX_BLOCKS + 1);
     dim3 threads(BLOCK_SIZE / 2);
-    int *dev_shift;
+    int* dev_shift;
     CSC(cudaMalloc(&dev_shift, num_of_blocks * sizeof(int)));
 
-    kernel_scan<<<blocks, threads>>> (dev_data, dev_shift, n);
+    kernel_scan << <blocks, threads >> > (dev_data, dev_shift, n);
     CSC(cudaGetLastError());
     if (num_of_blocks == 1) {
         CSC(cudaFree(dev_shift));
         return;
     }
     scan(dev_shift, num_of_blocks);
-    kernel_shift<<<blocks, threads>>> (dev_data, dev_shift, n);
+    kernel_shift << <blocks, threads >> > (dev_data, dev_shift, n);
     CSC(cudaGetLastError());
     CSC(cudaFree(dev_shift));
 }
 
 __global__
-void calc_bin(Ray *rays, int rays_num, int *bin, float min_power) {
+void calc_bin(Ray* rays, int rays_num, int* bin, float min_power) {
     int id_x = blockDim.x * blockIdx.x + threadIdx.x;
     int offset_x = blockDim.x * gridDim.x;
 
@@ -444,7 +471,7 @@ void calc_bin(Ray *rays, int rays_num, int *bin, float min_power) {
 }
 
 __global__
-void sort_rays(Ray *rays, Ray *rays_copy, int rays_num, int num_of_zeros, int *bin, int *scan_data) {
+void sort_rays(Ray* rays, Ray* rays_copy, int rays_num, int num_of_zeros, int* bin, int* scan_data) {
     int id_x = blockDim.x * blockIdx.x + threadIdx.x;
     int offset_x = blockDim.x * gridDim.x;
 

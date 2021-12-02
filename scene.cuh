@@ -20,13 +20,13 @@ public:
         : width(width), height(height) {}
 
     void add_figure(const Figure& figure) {
-        std::vector<Triangle> figure_trigs = figure.get_triangles();
+        const std::vector<Triangle>& figure_trigs = figure.get_triangles();
         trigs.insert(trigs.end(), figure_trigs.begin(), figure_trigs.end());
 
-        std::vector<Light> figure_lights = figure.get_lights();
+        const std::vector<Light>& figure_lights = figure.get_lights();
         lights.insert(lights.end(), figure_lights.begin(), figure_lights.end());
 
-        std::vector<Diod> figure_diods = figure.get_diods();
+        const std::vector<Diod>& figure_diods = figure.get_diods();
         diods.insert(diods.end(), figure_diods.begin(), figure_diods.end());
     }
 
@@ -35,27 +35,27 @@ public:
     }
 
     void add_floor(const float_3& A, const float_3& B, const float_3& C, const float_3& D,
-                   const Material& floor_material, const std::string& floor_path) {
-        trigs.push_back(Triangle(A, D, B, floor_material, true)); // DBA
-        trigs.push_back(Triangle(C, D, B, floor_material, true)); // DBC
+        const Material& floor_material, const std::string& floor_path) {
+        trigs.push_back(Triangle(A, D, B, floor_material, true)); 
+        trigs.push_back(Triangle(C, D, B, floor_material, true)); 
 
-        FILE *fp = fopen(floor_path.c_str(), "rb");
+        FILE* fp = fopen(floor_path.c_str(), "rb");
         fread(&floor_width, sizeof(int), 1, fp);
         fread(&floor_height, sizeof(int), 1, fp);
-        uchar_4 *floor_data = new uchar_4[floor_width * floor_height];
+        uchar_4* floor_data = new uchar_4[floor_width * floor_height];
         floor.resize(floor_width * floor_height);
         fread(floor_data, sizeof(uchar_4), floor_width * floor_height, fp);
         fclose(fp);
 
-        for (int i = 0; i < int(floor.size()); ++i) {
+        for (size_t i = 0; i < floor.size(); ++i) {
             floor[i] = uchar4_to_float3(floor_data[i]);
         }
         delete[] floor_data;
     }
 
     std::vector<uchar_4> render(const float_3& camera_pos, const float_3& camera_dir, float view_angle,
-                                int max_depth = 1, int sqrt_ray_per_pixel = 1,
-                                bool is_gpu = true, bool write=true) {
+        int max_depth = 1, int sqrt_ray_per_pixel = 1,
+        bool is_gpu = true, bool write = true) {
 
         int scaled_width = width * sqrt_ray_per_pixel;
         int scaled_height = height * sqrt_ray_per_pixel;
@@ -70,36 +70,36 @@ public:
         float_3 bx = norm(prod(bz, float_3(0.0f, 0.0f, 1.0f)));
         float_3 by = norm(prod(bx, bz));
 
-        #pragma omp parallel 
+#pragma omp parallel 
         {
             init_rays(render_rays,
-                      camera_pos,
-                      scaled_width,
-                      scaled_height,
-                      view_angle,
-                      bx, by, bz,
-                      omp_get_thread_num(),
-                      omp_get_num_threads());
+                camera_pos,
+                scaled_width,
+                scaled_height,
+                view_angle,
+                bx, by, bz,
+                omp_get_thread_num(),
+                omp_get_num_threads());
         }
 
         if (is_gpu) {
             if (write)
                 std::cout << "GPU\n";
             return gpu_render(render_rays, render_image,
-                              max_depth, scaled_width, scaled_height,
-                              rays_num, rays_capacity,
-                              sqrt_ray_per_pixel,
-                              write);
+                max_depth, scaled_width, scaled_height,
+                rays_num, rays_capacity,
+                sqrt_ray_per_pixel,
+                write);
 
         }
         else {
             if (write)
                 std::cout << "CPU\n";
             return cpu_render(render_rays, render_image,
-                              max_depth, scaled_width, scaled_height,
-                              rays_num, rays_capacity,
-                              sqrt_ray_per_pixel,
-                              write);
+                max_depth, scaled_width, scaled_height,
+                rays_num, rays_capacity,
+                sqrt_ray_per_pixel,
+                write);
         }
     }
 
@@ -137,16 +137,16 @@ private:
         return rays_num;
     }
 
-    int gpu_clean_rays(Ray *rays, int rays_num) {
+    int gpu_clean_rays(Ray* rays, int rays_num) {
 
-        int *bin, *scan_data;
-        Ray *rays_copy;
+        int* bin, * scan_data;
+        Ray* rays_copy;
 
         CSC(cudaMalloc(&bin, sizeof(int) * rays_num));
         CSC(cudaMalloc(&scan_data, sizeof(int) * rays_num));
         CSC(cudaMalloc(&rays_copy, sizeof(Ray) * rays_num));
 
-        calc_bin<<<256, 256>>> (rays, rays_num, bin, min_power);
+        calc_bin << <256, 256 >> > (rays, rays_num, bin, min_power);
         CSC(cudaGetLastError());
 
         CSC(cudaMemcpy(scan_data, bin, sizeof(int) * rays_num, cudaMemcpyDeviceToDevice));
@@ -161,7 +161,7 @@ private:
 
         CSC(cudaMemcpy(rays_copy, rays, sizeof(Ray) * rays_num, cudaMemcpyDeviceToDevice));
 
-        sort_rays<<<256, 256>>> (rays, rays_copy, rays_num, num_of_zeros, bin, scan_data);
+        sort_rays << <256, 256 >> > (rays, rays_copy, rays_num, num_of_zeros, bin, scan_data);
         CSC(cudaGetLastError());
 
         CSC(cudaFree(bin));
@@ -172,13 +172,13 @@ private:
     }
 
     std::vector<uchar_4> gpu_render(std::vector<Ray>& render_rays, std::vector<float_3>& render_image,
-                                    int max_depth, int scaled_width, int scaled_height,
-                                    int rays_num, int rays_capacity,
-                                    int sqrt_ray_per_pixel,
-                                    bool write) {
+        int max_depth, int scaled_width, int scaled_height,
+        int rays_num, int rays_capacity,
+        int sqrt_ray_per_pixel,
+        bool write) {
 
-        Ray *dev_render_rays;
-        float_3 *dev_render_image;
+        Ray* dev_render_rays;
+        float_3* dev_render_image;
 
         CSC(cudaMalloc(&dev_render_rays, sizeof(Ray) * render_rays.size()));
         CSC(cudaMalloc(&dev_render_image, sizeof(float_3) * render_image.size()));
@@ -191,16 +191,16 @@ private:
         for (int cur_depth = 1; cur_depth <= max_depth; ++cur_depth) {
             if (write)
                 std::cout << "\tRecursion depth: " << cur_depth
-                          << "\tNumber of rays: " << rays_num << std::endl;
+                << "\tNumber of rays: " << rays_num << std::endl;
 
-            start_gpu_ray_trace<<<256, 256>>> (dev_render_rays, rays_num,
-                                               dev_trigs, trigs.size(),
-                                               dev_lights, lights.size(),
-                                               dev_diods, diods.size(),
-                                               dev_floor,
-                                               dev_render_image,
-                                               scaled_width, scaled_height,
-                                               floor_width, floor_height);
+            start_gpu_ray_trace <<<256, 256>>> (dev_render_rays, rays_num,
+                dev_trigs, trigs.size(),
+                dev_lights, lights.size(),
+                dev_diods, diods.size(),
+                dev_floor,
+                dev_render_image,
+                scaled_width, scaled_height,
+                floor_width, floor_height);
             CSC(cudaGetLastError());
 
             rays_num = gpu_clean_rays(dev_render_rays, rays_capacity);
@@ -210,7 +210,7 @@ private:
             rays_capacity = 2 * rays_num;
 
             if (max_capacity < rays_capacity) {
-                Ray *new_dev_rays;
+                Ray* new_dev_rays;
                 CSC(cudaMalloc(&new_dev_rays, sizeof(Ray) * rays_capacity));
                 CSC(cudaMemcpy(new_dev_rays, dev_render_rays, sizeof(Ray) * rays_num, cudaMemcpyDeviceToDevice));
                 CSC(cudaFree(dev_render_rays));
@@ -219,9 +219,9 @@ private:
             }
         }
 
-        uchar_4 *dev_result_image;
+        uchar_4* dev_result_image;
         CSC(cudaMalloc(&dev_result_image, sizeof(uchar_4) * width * height));
-        gpu_ssaa<<<dim3(32, 32), dim3(32, 32)>>> (dev_render_image, dev_result_image, width, height, sqrt_ray_per_pixel);
+        gpu_ssaa << <dim3(32, 32), dim3(32, 32) >> > (dev_render_image, dev_result_image, width, height, sqrt_ray_per_pixel);
         CSC(cudaGetLastError());
 
         std::vector<uchar_4> result_image(width * height);
@@ -235,28 +235,28 @@ private:
     }
 
     std::vector<uchar_4> cpu_render(std::vector<Ray>& render_rays, std::vector<float_3>& render_image,
-                                    int max_depth, int scaled_width, int scaled_height,
-                                    int rays_num, int rays_capacity,
-                                    int sqrt_ray_per_pixel,
-                                    bool write = true) {
+        int max_depth, int scaled_width, int scaled_height,
+        int rays_num, int rays_capacity,
+        int sqrt_ray_per_pixel,
+        bool write = true) {
 
         for (int cur_depth = 1; cur_depth <= max_depth; ++cur_depth) {
             if (write)
                 std::cout << "\tRecursion depth: " << cur_depth
-                          << "\tNumber of rays: " << rays_num << std::endl;
+                << "\tNumber of rays: " << rays_num << std::endl;
 
             #pragma omp parallel 
             {
                 ray_trace(render_rays.data(), rays_num,
-                          trigs.data(), trigs.size(),
-                          lights.data(), lights.size(),
-                          diods.data(), diods.size(),
-                          floor.data(),
-                          render_image.data(),
-                          scaled_width, scaled_height,
-                          floor_width, floor_height,
-                          omp_get_thread_num(),
-                          omp_get_num_threads());
+                    trigs.data(), trigs.size(),
+                    lights.data(), lights.size(),
+                    diods.data(), diods.size(),
+                    floor.data(),
+                    render_image.data(),
+                    scaled_width, scaled_height,
+                    floor_width, floor_height,
+                    omp_get_thread_num(),
+                    omp_get_num_threads());
             }
 
             rays_num = cpu_clean_rays(render_rays, rays_capacity);
@@ -276,9 +276,9 @@ private:
     }
 
     void init_rays(std::vector<Ray>& rays,
-                   const float_3& camera_pos, int scaled_width, int scaled_height, float view_angle,
-                   const float_3& bx, const float_3& by, const float_3& bz,
-                   int start=0, int step=1) {
+        const float_3& camera_pos, int scaled_width, int scaled_height, float view_angle,
+        const float_3& bx, const float_3& by, const float_3& bz,
+        int start = 0, int step = 1) {
 
         float dw = 2.0f / (scaled_width - 1.0f);
         float dh = 2.0f / (scaled_height - 1.0f);
@@ -307,10 +307,10 @@ private:
     std::vector<Diod> diods;
     std::vector<float_3> floor;
 
-    Triangle *dev_trigs;
-    Light *dev_lights;
-    Diod *dev_diods;
-    float_3 *dev_floor;
+    Triangle* dev_trigs;
+    Light* dev_lights;
+    Diod* dev_diods;
+    float_3* dev_floor;
 
     const float min_power = 0.001f;
 };

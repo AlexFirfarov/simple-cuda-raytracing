@@ -7,18 +7,18 @@
 
 class Figure {
 public:
-    Figure(const float_3& center, float radius, const Material& material, int source_per_line)
+    Figure(const float_3& center, float radius, const Material& material, size_t source_per_line)
         : center(center), radius(radius), material(material), source_per_line(source_per_line) {}
 
-    std::vector<Triangle> get_triangles() const {
+    const std::vector<Triangle>& get_triangles() const {
         return trigs;
     }
 
-    std::vector<Light> get_lights() const {
+    const std::vector<Light>& get_lights() const {
         return lights;
     }
 
-    std::vector<Diod> get_diods() const {
+    const std::vector<Diod>& get_diods() const {
         return diods;
     }
 
@@ -29,24 +29,19 @@ protected:
     virtual void generate_triangles() = 0;
 
     void add_edge(const Line& line, const std::pair<int, int>& f) {
-        float_3 point_1 = vertexes[line.point_id_1];
-        float_3 point_2 = vertexes[line.point_id_2];
+        const float_3& point_1 = vertexes[line.point_id_1];
+        const float_3& point_2 = vertexes[line.point_id_2];
 
         float_3 point1_dir = vertexes[f.first] - point_1;
         float_3 point2_dir = vertexes[f.second] - point_2;
         float_3 point1_p = point_1 + point1_dir * edge_koef;
         float_3 point2_p = point_2 + point2_dir * edge_koef;
 
-        Triangle trig_1(point_1 * 1.01f, point1_p * 1.01f, point_2 * 1.01f, edge_material);
-        Triangle trig_2(point_2 * 1.01f, point2_p * 1.01f, point1_p * 1.01f, edge_material);
+        trigs.emplace_back(point_1 * 1.01f, point1_p * 1.01f, point_2 * 1.01f, edge_material);
+        trigs.emplace_back(point_2 * 1.01f, point2_p * 1.01f, point1_p * 1.01f, edge_material);
 
-        Triangle trig_3(point_1 * 0.99f, point1_p * 0.99f, point_2 * 0.99f, edge_material, false, true);
-        Triangle trig_4(point_2 * 0.99f, point2_p * 0.99f, point1_p * 0.99f, edge_material, false, true);
-
-        trigs.push_back(trig_1);
-        trigs.push_back(trig_2);
-        trigs.push_back(trig_3);
-        trigs.push_back(trig_4);
+        trigs.emplace_back(point_1 * 0.99f, point1_p * 0.99f, point_2 * 0.99f, edge_material, false, true);
+        trigs.emplace_back(point_2 * 0.99f, point2_p * 0.99f, point1_p * 0.99f, edge_material, false, true);
     }
 
     void transform_triangles_to_center() {
@@ -58,7 +53,7 @@ protected:
     }
 
     void generate_diods() {
-        for (auto& edge : edges) {
+        for (const auto& edge : edges) {
             float_3 point_1 = vertexes[edge.line.point_id_1] * 0.98f;
             float_3 point_2 = vertexes[edge.line.point_id_2] * 0.98f;
 
@@ -66,7 +61,7 @@ protected:
             float step = edge_length / float(source_per_line + 1);
             float_3 dir = norm(point_2 - point_1);
 
-            for (int i = 1; i <= source_per_line; ++i) {
+            for (size_t i = 1; i <= source_per_line; ++i) {
                 float_3 diod_point = point_1 + dir * step * i;
                 float diod_radius = edge_length * diod_koef;
                 diods.push_back(Diod(diod_point + center, diod_material, diod_radius));
@@ -78,6 +73,16 @@ protected:
         lights.push_back(Light(center, float_3(1.0f, 1.0f, 1.0f)));
     }
 
+    void initialize_figure() {
+        generate_vertexes();
+        scale_vertexes();
+        generate_edges();
+        generate_triangles();
+        transform_triangles_to_center();
+        generate_diods();
+        generate_lights(); 
+    }
+
     float dist(const float_3& lhs, const float_3& rhs) const {
         return sqrt((rhs.x - lhs.x) * (rhs.x - lhs.x) +
                     (rhs.y - lhs.y) * (rhs.y - lhs.y) +
@@ -86,7 +91,7 @@ protected:
 
     float_3 center;
     float radius;
-    int source_per_line;
+    size_t source_per_line;
     Material material;
 
     const float edge_koef = 0.05f;
@@ -104,19 +109,13 @@ protected:
 
 class Tetraeder : public Figure {
 public:
-    Tetraeder(const float_3& center, float radius, const Material& material, int source_per_line)
+    Tetraeder(const float_3& center, float radius, const Material& material, size_t source_per_line)
         : Figure(center, radius, material, source_per_line) {
-        generate_vertexes();
-        scale_vertexes();
-        generate_edges();
-        generate_triangles();
-        transform_triangles_to_center();
-        generate_diods();
-        generate_lights();
+        initialize_figure();
     }
 
 private:
-    void generate_vertexes() {
+    void generate_vertexes() override {
         vertexes.resize(4);
 
         vertexes[0] = float_3(-1.0f, -1.0f / sqrt(3.0f), -1.0f / sqrt(6.0f));
@@ -125,14 +124,14 @@ private:
         vertexes[3] = float_3(0.0f, 0.0f, 3.0f / sqrt(6.0f));
     }
 
-    void scale_vertexes() {
+    void scale_vertexes() override {
         float edge_length = 4.0f * radius / sqrt(6.0f);
         for (auto& vertex : vertexes) {
             vertex *= 0.5f * edge_length;
         }
     }
 
-    void generate_edges() {
+    void generate_edges() override {
         edges.resize(6);
 
         edges[0] = Edge(Line(0, 2), { 3, 3 }, { 1, 1 });
@@ -143,14 +142,14 @@ private:
         edges[5] = Edge(Line(1, 3), { 2, 2 }, { 0, 0 });
     }
 
-    void generate_triangles() {
+    void generate_triangles() override {
 
         for (const auto& edge : edges) {
             add_edge(edge.line, edge.f1);
             add_edge(edge.line, edge.f2);
         }
 
-        int st = trigs.size();
+        size_t st = trigs.size();
         trigs.resize(st + 4);
 
         trigs[st + 0] = Triangle(vertexes[0], vertexes[1], vertexes[2], material);
@@ -162,19 +161,13 @@ private:
 
 class Dodecahedron : public Figure {
 public:
-    Dodecahedron(const float_3& center, float radius, const Material& material, int source_per_line)
+    Dodecahedron(const float_3& center, float radius, const Material& material, size_t source_per_line)
         : Figure(center, radius, material, source_per_line) {
-        generate_vertexes();
-        scale_vertexes();
-        generate_edges();
-        generate_triangles();
-        transform_triangles_to_center();
-        generate_diods();
-        generate_lights();
+        initialize_figure();
     }
 
 private:
-    void generate_vertexes() {
+    void generate_vertexes() override {
         vertexes.resize(20);
 
         vertexes[0] = float_3(1.0f, 1.0f, 1.0f);
@@ -202,14 +195,14 @@ private:
         vertexes[19] = float_3(-1.0f / phi, -phi, 0.0f);
     }
 
-    void scale_vertexes() {
+    void scale_vertexes() override {
         float edge_length = 2.0f * radius / (sqrt(3.0f) * phi);
         for (auto& vertex : vertexes) {
             vertex *= 0.5f * phi * edge_length;
         }
     }
 
-    void generate_edges() {
+    void generate_edges() override {
         edges.resize(30);
 
         edges[0] = Edge(Line(10, 8), { 2, 0 }, { 6, 4 });
@@ -230,7 +223,6 @@ private:
         edges[15] = Edge(Line(19, 7), { 17, 11 }, { 6, 15 });
         edges[16] = Edge(Line(7, 11), { 19, 3 }, { 15, 9 });
         edges[17] = Edge(Line(11, 3), { 7, 17 }, { 9, 13 });
-
         edges[18] = Edge(Line(7, 15), { 11, 5 }, { 19, 14 });
         edges[19] = Edge(Line(15, 14), { 5, 4 }, { 7, 6 });
         edges[20] = Edge(Line(15, 5), { 14, 18 }, { 7, 9 });
@@ -245,14 +237,14 @@ private:
         edges[29] = Edge(Line(16, 18), { 1, 5 }, { 0, 4 });
     }
 
-    void generate_triangles() {
+    void generate_triangles() override {
 
         for (const auto& edge : edges) {
             add_edge(edge.line, edge.f1);
             add_edge(edge.line, edge.f2);
         }
 
-        int st = trigs.size();
+        size_t st = trigs.size();
         trigs.resize(st + 36);
 
         trigs[st + 0] = Triangle(vertexes[10], vertexes[6], vertexes[19], material);
@@ -310,19 +302,13 @@ private:
 
 class Icosahedron : public Figure {
 public:
-    Icosahedron(const float_3& center, float radius, const Material& material, int source_per_line)
+    Icosahedron(const float_3& center, float radius, const Material& material, size_t source_per_line)
         : Figure(center, radius, material, source_per_line) {
-        generate_vertexes();
-        scale_vertexes();
-        generate_edges();
-        generate_triangles();
-        transform_triangles_to_center();
-        generate_diods();
-        generate_lights();
+        initialize_figure();
     }
 
 private:
-    void generate_vertexes() {
+    void generate_vertexes() override {
         vertexes.resize(12);
 
         vertexes[0] = float_3(0.0f, phi, 1.0f);
@@ -341,14 +327,14 @@ private:
         vertexes[11] = float_3(-phi, -1.0f, 0.0f);
     }
 
-    void scale_vertexes() {
+    void scale_vertexes() override {
         float edge_length = 4.0f * radius / sqrt(10.0f + 2.0f * sqrt(5.0f));
         for (auto& vertex : vertexes) {
             vertex *= 0.5f * edge_length;
         }
     }
 
-    void generate_edges() {
+    void generate_edges() override {
         edges.resize(30);
 
         edges[0] = Edge(Line(2, 4), { 9, 9 }, { 6, 6 });
@@ -367,7 +353,6 @@ private:
         edges[13] = Edge(Line(3, 11), { 2, 2 }, { 7, 7 });
         edges[14] = Edge(Line(11, 2), { 3, 3 }, { 6, 6 });
         edges[15] = Edge(Line(11, 6), { 2, 2 }, { 10, 10 });
-
         edges[16] = Edge(Line(11, 7), { 3, 3 }, { 10, 10 });
         edges[17] = Edge(Line(7, 3), { 11, 11 }, { 5, 5 });
         edges[18] = Edge(Line(7, 10), { 11, 11 }, { 1, 1 });
@@ -384,14 +369,14 @@ private:
         edges[29] = Edge(Line(5, 8), { 9, 9 }, { 1, 1 });
     }
 
-    void generate_triangles() {
+    void generate_triangles() override {
 
         for (const auto& edge : edges) {
             add_edge(edge.line, edge.f1);
             add_edge(edge.line, edge.f2);
         }
 
-        int st = trigs.size();
+        size_t st = trigs.size();
         trigs.resize(st + 20);
 
         trigs[st + 0] = Triangle(vertexes[4], vertexes[9], vertexes[2], material);

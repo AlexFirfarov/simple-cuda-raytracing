@@ -15,7 +15,7 @@ do {																\
 } while(0)
 
 struct uchar_4 {
-    __host__ __device__ uchar_4() {}
+    __host__ __device__ uchar_4() = default;
     __host__ __device__ uchar_4(uchar x, uchar y, uchar z, uchar w)
         : x(x), y(y), z(z), w(w) {}
 
@@ -26,7 +26,7 @@ struct uchar_4 {
 };
 
 struct float_3 {
-    __host__ __device__ float_3() {}
+    __host__ __device__ float_3() = default;
     __host__ __device__ float_3(float x, float y, float z)
         : x(x), y(y), z(z) {}
 
@@ -54,8 +54,8 @@ float_3 prod(const float_3& a, const float_3& b) {
 __host__ __device__
 float_3 mult(const float_3& a, const float_3& b, const float_3& c, const float_3& v) {
     return float_3(a.x * v.x + b.x * v.y + c.x * v.z,
-                   a.y * v.x + b.y * v.y + c.y * v.z,
-                   a.z * v.x + b.z * v.y + c.z * v.z);
+        a.y * v.x + b.y * v.y + c.y * v.z,
+        a.z * v.x + b.z * v.y + c.z * v.z);
 }
 
 __host__ __device__
@@ -142,9 +142,17 @@ float_3& operator/= (float_3& lhs, float_3& rhs) {
 }
 
 struct Material {
-    __host__ __device__ Material() {};
-    __host__ __device__ Material(const float_3& color, float reflection, float refraction, float diffussion = 0.5f, int specular_pow = 64)
-        : color(color), reflection(reflection), refraction(refraction), diffussion(diffussion), specular_pow(specular_pow) {}
+    __host__ __device__ Material() = default;
+    __host__ __device__ Material(const float_3& color, 
+                                 float reflection, 
+                                 float refraction, 
+                                 float diffussion = 0.5f, 
+                                 int specular_pow = 64)
+        : color(color), 
+          reflection(reflection), 
+          refraction(refraction), 
+          diffussion(diffussion), 
+          specular_pow(specular_pow) {}
 
     float_3 color;
     float reflection;
@@ -154,9 +162,19 @@ struct Material {
 };
 
 struct Triangle {
-    __host__ __device__ Triangle() {};
-    __host__ __device__ Triangle(const float_3& a, const float_3& b, const float_3& c, const Material& material, bool is_floor = false, bool is_internal_edge = false)
-        : a(a), b(b), c(c), material(material), is_floor(is_floor), is_internal_edge(is_internal_edge) {}
+    __host__ __device__ Triangle() = default;
+    __host__ __device__ Triangle(const float_3& a, 
+                                 const float_3& b, 
+                                 const float_3& c, 
+                                 const Material& material, 
+                                 bool is_floor = false, 
+                                 bool is_internal_edge = false)
+        : a(a), 
+          b(b), 
+          c(c), 
+          material(material), 
+          is_floor(is_floor), 
+          is_internal_edge(is_internal_edge) {}
 
     float_3 a;
     float_3 b;
@@ -167,9 +185,16 @@ struct Triangle {
 };
 
 struct Ray {
-    __host__ __device__ Ray() {}
-    __host__ __device__ Ray(const float_3& from, const float_3& dir, int pixel_id_x = 0, int pixel_id_y = 0, float power = 1.0f)
-        : from(from), dir(norm(dir)), pixel_id_x(pixel_id_x), pixel_id_y(pixel_id_y), power(power) {}
+    __host__ __device__ Ray() = default;
+    __host__ __device__ Ray(const float_3& from, 
+                            const float_3& dir, 
+                            int pixel_id_x = 0, 
+                            int pixel_id_y = 0, 
+                            float power = 1.0f)
+        : from(from), 
+          dir(norm(dir)), 
+          pixel_id_x(pixel_id_x), 
+          pixel_id_y(pixel_id_y), power(power) {}
 
     float_3 from;
     float_3 dir;
@@ -184,7 +209,6 @@ bool operator< (const Ray& lhs, const Ray& rhs) {
 }
 
 struct Light {
-    Light() {};
     Light(const float_3& coord, const float_3& color, float power = 1.0f)
         : coord(coord), color(color), power(power) {}
 
@@ -194,7 +218,7 @@ struct Light {
 };
 
 struct Line {
-    Line() {}
+    Line() = default;
     Line(int point_id_1, int point_id_2)
         : point_id_1(point_id_1), point_id_2(point_id_2) {}
 
@@ -203,7 +227,7 @@ struct Line {
 };
 
 struct Edge {
-    Edge() {}
+    Edge() = default;
     Edge(const Line& line, const std::pair<int, int>& f1, const std::pair<int, int>& f2)
         : line(line), f1(f1), f2(f2) {}
 
@@ -213,7 +237,7 @@ struct Edge {
 };
 
 struct Diod {
-    Diod() {}
+    Diod() = default;
     Diod(const float_3& point, const Material& material, float radius)
         : point(point), material(material), radius(radius) {}
 

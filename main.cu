@@ -4,6 +4,7 @@
 
 #include "structures.cuh"
 #include "scene.cuh"
+#include "figures.cuh"
 
 #include "mpi.h"
 
@@ -12,6 +13,29 @@
 
 float_3 cilindric_to_decart(float r, float f, float z) {
     return float_3(r * cos(f), r * sin(f), z);
+}
+
+void print_default_settings() {
+    std::cout << "256" << std::endl;
+    std::cout << "images/%d.data" << std::endl;
+    std::cout << "720 480 120" << std::endl;
+    std::cout << "4.5 3.0 0.0 2.0 1.0 2.0 6.0 1.0 0.0 0.0" << std::endl;
+    std::cout << "1.0 0.0 0.0 0.5 0.1 1.0 4.0 1.0 0.0 0.0" << std::endl;
+    std::cout << "0.0 3.0 0.5 0.6 0.0 0.0 1.1 0.7 0.3 2" << std::endl;
+    std::cout << "2.5 0.0 0.6 0.2 0.6 0.0 1.6 0.8 0.3 7" << std::endl;
+    std::cout << "-2.5 0.0 0.5 0.0 0.7 0.7 1.7 0.7 0.5 5" << std::endl;
+    std::cout << "-5.0 -5.0 -2.0 -5.0 5.0 -2.0 5.0 5.0 -2.0 5.0 -5.0 -2.0" << std::endl;
+    std::cout << "textures/floor.data 1.0 0.0 1.0 0.5" << std::endl;
+    std::cout << "8" << std::endl;
+    std::cout << "-10.0 0.0 50.0 0.2 0.2 0.2" << std::endl;
+    std::cout << "10.0 0.0 50.0 0.2 0.2 0.2" << std::endl;
+    std::cout << "10.0 10.0 50.0 0.2 0.2 0.2" << std::endl;
+    std::cout << "10.0 -10.0 50.0 0.2 0.2 0.2" << std::endl;
+    std::cout << "0.0 -10.0 50.0 0.2 0.2 0.2" << std::endl;
+    std::cout << "0.0 10.0 50.0 0.2 0.2 0.2" << std::endl;
+    std::cout << "10.0 0.0 50.0 0.2 0.2 0.2" << std::endl;
+    std::cout << "-10.0 0.0 50.0 0.2 0.2 0.2" << std::endl;
+    std::cout << "50 4" << std::endl;
 }
 
 int main(int argc, char** argv) {
@@ -24,21 +48,7 @@ int main(int argc, char** argv) {
         else if (!strcmp(argv[1], "--cpu"))
             is_gpu = false;
         else if (!strcmp(argv[1], "--default")) {
-            std::cout << "256" << std::endl;
-            std::cout << "images/%d.data" << std::endl;
-            std::cout << "720 480 120" << std::endl;
-            std::cout << "4.5 3.0 0.0 2.0 1.0 2.0 6.0 1.0 0.0 0.0" << std::endl;
-            std::cout << "1.0 0.0 0.0 0.5 0.1 1.0 4.0 1.0 0.0 0.0" << std::endl;
-            std::cout << "0.0 3.0 0.5 0.8 0.0 0.0 1.2 0.5 0.5 5" << std::endl;
-            std::cout << "2.5 0.0 0.5 0.2 0.6 0.0 1.6 0.5 0.5 7" << std::endl;
-            std::cout << "-2.5 0.0 0.5 0.0 0.7 0.7 1.7 0.7 0.7 5" << std::endl;
-            std::cout << "-5.0 -5.0 -2.0 -5.0 5.0 -2.0 5.0 5.0 -2.0 5.0 -5.0 -2.0" << std::endl;
-            std::cout << "textures/floor.data 1.0 0.0 1.0 0.5" << std::endl;
-            std::cout << "2" << std::endl;
-            std::cout << "-1.0 0.0 15.0 1.0 1.0 1.0" << std::endl;
-            std::cout << "1.0 0.0 5.0 1.0 1.0 1.0" << std::endl;
-            std::cout << "7 2" << std::endl;
-
+            print_default_settings();
             return 0;
         }
     }
@@ -82,9 +92,9 @@ int main(int argc, char** argv) {
                  >> rn_0 >> zn_0 >> fn_0 >> An_r >> An_z >> wn_r >> wn_z >> wn_f >> pn_r >> pn_z;
 
     }
-    
+
     MPI_Bcast(&frames, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&image_path, 256, MPI_CHAR, 0, MPI_COMM_WORLD); 
+    MPI_Bcast(&image_path, 256, MPI_CHAR, 0, MPI_COMM_WORLD);
     MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&height, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&view_angle, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -110,7 +120,7 @@ int main(int argc, char** argv) {
     MPI_Bcast(&wn_f, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&pn_r, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&pn_z, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    
+
     Scene scene(width, height);
 
     if (id_proc == 0) {
@@ -119,7 +129,7 @@ int main(int argc, char** argv) {
                  >> radius >> reflection >> refraction
                  >> source_per_line;
     }
-        
+
     MPI_Bcast(&center.x, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&center.y, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&center.z, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -130,7 +140,7 @@ int main(int argc, char** argv) {
     MPI_Bcast(&reflection, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&refraction, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&source_per_line, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    
+
     Material material_1(color, reflection, refraction);
     scene.add_figure(Tetraeder(center, radius, material_1, source_per_line));
 
@@ -151,7 +161,7 @@ int main(int argc, char** argv) {
     MPI_Bcast(&reflection, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&refraction, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&source_per_line, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    
+
     Material material_2(color, reflection, refraction);
     scene.add_figure(Dodecahedron(center, radius, material_2, source_per_line));
 
@@ -172,7 +182,7 @@ int main(int argc, char** argv) {
     MPI_Bcast(&reflection, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&refraction, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&source_per_line, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    
+
     Material material_3(color, reflection, refraction);
     scene.add_figure(Icosahedron(center, radius, material_3, source_per_line));
 
@@ -199,7 +209,7 @@ int main(int argc, char** argv) {
     MPI_Bcast(&floor_D.y, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&floor_D.z, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-    MPI_Bcast(&floor_path, 256, MPI_CHAR, 0, MPI_COMM_WORLD); 
+    MPI_Bcast(&floor_path, 256, MPI_CHAR, 0, MPI_COMM_WORLD);
 
     MPI_Bcast(&floor_color.x, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&floor_color.y, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -212,7 +222,7 @@ int main(int argc, char** argv) {
     if (id_proc == 0) {
         std::cin >> source_num;
     }
-        
+
     MPI_Bcast(&source_num, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     for (int i = 0; i < source_num; ++i) {
@@ -270,13 +280,13 @@ int main(int argc, char** argv) {
         std::vector<uchar_4> image = scene.render(pc, pv, view_angle, recursion_depth, sqrt_ray_per_pixel, is_gpu, write);
 
         auto elapsed = std::chrono::high_resolution_clock::now() - start;
-        long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+        long long seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
 
         if (write)
-            std::cout << "Render time: " << microseconds << " microseconds" << std::endl;
+            std::cout << "Render time: " << seconds << " seconds" << std::endl;
 
         sprintf(buff, image_path, frame_id);
-        FILE *out = fopen(buff, "wb");
+        FILE* out = fopen(buff, "wb");
         fwrite(&width, sizeof(int), 1, out);
         fwrite(&height, sizeof(int), 1, out);
         fwrite(image.data(), sizeof(uchar_4), width * height, out);
