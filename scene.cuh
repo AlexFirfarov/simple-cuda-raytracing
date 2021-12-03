@@ -312,5 +312,5 @@ private:
     Diod* dev_diods;
     float_3* dev_floor;
 
-    const float min_power = 0.001f;
+    const float min_power = 0.00001f;
 };

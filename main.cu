@@ -18,10 +18,10 @@ float_3 cilindric_to_decart(float r, float f, float z) {
 void print_default_settings() {
     std::cout << "256" << std::endl;
     std::cout << "images/%d.data" << std::endl;
-    std::cout << "720 480 120" << std::endl;
+    std::cout << "800 600 120" << std::endl;
     std::cout << "4.5 3.0 0.0 2.0 1.0 2.0 6.0 1.0 0.0 0.0" << std::endl;
     std::cout << "1.0 0.0 0.0 0.5 0.1 1.0 4.0 1.0 0.0 0.0" << std::endl;
-    std::cout << "0.0 3.0 0.5 0.6 0.0 0.0 1.1 0.7 0.3 2" << std::endl;
+    std::cout << "0.0 3.0 0.5 0.6 0.0 0.0 0.8 0.4 0.1 2" << std::endl;
     std::cout << "2.5 0.0 0.6 0.2 0.6 0.0 1.6 0.8 0.3 7" << std::endl;
     std::cout << "-2.5 0.0 0.5 0.0 0.7 0.7 1.7 0.7 0.5 5" << std::endl;
     std::cout << "-5.0 -5.0 -2.0 -5.0 5.0 -2.0 5.0 5.0 -2.0 5.0 -5.0 -2.0" << std::endl;
